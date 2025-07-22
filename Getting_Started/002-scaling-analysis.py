@@ -38,13 +38,13 @@ returns_daily = (prices_daily
     .dropna(subset="ret")                 
 )
 
-print(
-    (returns_daily
-    .groupby("symbol")["ret"]
-    .describe()
-    .round(3)
-    )
-)
+# print(
+#     (returns_daily
+#     .groupby("symbol")["ret"]
+#     .describe()
+#     .round(3)
+#     )
+# )
 
 # Different Frequencies
 
@@ -83,3 +83,38 @@ apple_retuns_figure = (
 # apple_retuns_figure.show()
 
 # Other Forms of Data Aggregation
+
+trading_volume = (prices_daily
+    .assign(trading_volume=lambda x: (x["volume"]*x["adjusted_close"])/1e9)
+    .groupby("date")["trading_volume"]
+    .sum()
+    .reset_index()
+    .assign(trading_volume_lag=lambda x: x["trading_volume"].shift(periods=1))
+)
+
+# print(trading_volume)
+
+trading_volume_figure = (
+    ggplot(trading_volume, aes(x="date", y="trading_volume"))
+    + geom_line()
+    + scale_x_datetime(date_breaks="5 years", date_labels="%Y")
+    + labs(
+        x="", y="",
+        title="Aggregate daily trading volume of DOW index constituents in billion USD"
+    )
+)
+
+# trading_volume_figure.show()
+
+persitence_figure = (
+    ggplot(trading_volume, aes(x="trading_volume_lag", y="trading_volume"))
+    + geom_point()
+    + geom_abline(aes(intercept=0, slope=1), linetype="dashed")
+    + labs(
+        x="Previous day aggregate trading volume",
+        y="Aggregate trading volume",
+        title="Persistence in daily trading volume of DOW constituents in billion USD"
+    )
+)
+
+persitence_figure.show()
